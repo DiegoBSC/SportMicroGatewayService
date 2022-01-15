@@ -1,0 +1,50 @@
+management:
+  endpoint.gateway.enabled: true
+  endpoints.web.exposure.include: gateway
+
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      discovery.locator.enabled: true
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+        add-to-simple-url-handler-mapping: true
+      routes:
+        - id: sport-complex-service-id
+          uri: lb://sport-complex-service
+          predicates:
+            Path=/complex/**
+          filters:
+            - AuthFilter
+           # - PrefixPath=/complex/
+        - id: sport-user-service-id
+          uri: lb://sport-user-service
+          predicates:
+            Path=/user/**
+        - id: service-users-service-private-id
+          uri: lb://sport-user-service
+          predicates:
+            Path=/private/user/**
+          filters:
+            - AuthFilter
+
+server:
+  port: 8090
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
